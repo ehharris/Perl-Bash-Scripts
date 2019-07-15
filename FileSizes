@@ -1,0 +1,193 @@
+#! /usr/bin/perl
+use 5.16.1;
+use strict;
+use warnings;
+use File::Find;
+use Scalar::Util qw(looks_like_number);
+use Switch;
+
+
+#Name: Eli Harris
+#Email: ehharris@rams.colostate.edu
+#Date: 12/9
+#Class: CT320
+#Assign: HW7/sizes
+my $check = 0;
+my $dir;
+my $count  = 0;
+my $size = 0;
+
+if ($#ARGV eq -1){
+    die "$0: No quota files entered to test";
+}
+
+sub size {
+   # we get each filename in $_
+   return unless -f;
+   my $file_size = -s $_;
+   $size += $file_size;
+   $count++;
+   #print "Found $_ $file_size Bytes\n";
+}
+
+foreach my $fileName(@ARGV) {
+	open(my $fh, $fileName) or die "$0: Couldn't open file '$fileName' \!"; 
+    while (my $row = <$fh>) {
+        chomp $row;
+        my $firstChar = substr($row, 0, 1);
+        if ($firstChar ne "#" && $row ne ""){
+            if ($check eq 0){
+                $dir = $row;
+                $check = 1;
+                if ($firstChar eq "/"){
+                    if(! -d "$dir"){
+                        die "$0: $dir is not vaild a directory!\n";
+                    }
+                } 
+                else {
+                    my $userName = $row;
+                    if ($firstChar eq "~") {
+                        my @words = split /~/, $row;
+                        $userName = $words[1]; 
+                    }
+                    my $check2 = 0;
+                    while((my $name, my $passwd, my $uid, my $gid, my $quota, my $comment, my$gcos, my $homeDir, my $shell) = getpwent()) {
+                        if ($userName eq $name){
+                        $dir = $homeDir;
+                        $check2 = 1;
+                        }
+                    }
+                    if (! -d $dir){
+                        $check2 = 0;
+                    }
+                    if ($check2 ne 1){
+                        die "$0: $userName does not have a vaild home directory on this system!\n";
+                    }
+                }
+            } 
+            else {
+                #calc size and # of files
+                opendir my $dh, $dir  or die "$0: Can't open $dir, bad directory given!";
+                closedir($dh);
+                find( \&size, $dir );
+                my $secChar = substr($row, 1, 1);
+                #size of plain files
+                my $val = substr($row, 2);
+                if ($firstChar eq "t"){
+                   if ($secChar eq ">"){
+                        if (looks_like_number($val)){
+                            if ($size lt $val){
+                                print "$dir: total minimum of $val voilated\n";
+                            }
+                        } else {
+                            my $tempVal = $val;
+                            my $letter = chop $val;
+                            $letter = uc $letter;
+                            switch ($letter) {
+                                case "D"    { $val = $val * 12; }
+                                case "S"    { $val = $val * 20; }
+                                case "H"    { $val = $val * 100; }
+                                case "M"    { $val = $val * 100000000; }
+                                case "B"    { $val = $val * 1000000000; }
+                                else        { die "$0: $letter isn't valid syntax\n"; }                                
+                            }
+                            if($val gt 1000000000000){
+                                die "$0: value $val violates max value to be tested, value must be at or under 1 Trillion\n";
+                            }
+                            if($size lt $val){
+                                print "$dir: total minimum of $tempVal voilated\n";
+                            }
+                            }
+                        }
+                     elsif ($secChar eq "<"){
+                       if (looks_like_number($val)){
+                            if ($size gt $val){
+                                print "$dir: total maximum of $val voilated\n";
+                            }
+                        } else {
+                            my $tempVal = $val;
+                            my $letter = chop $val;
+                            $letter = uc $letter;
+                            switch ($letter) {
+                                case "D"    { $val = $val * 12; }
+                                case "S"    { $val = $val * 20; }
+                                case "H"    { $val = $val * 100; }
+                                case "M"    { $val = $val * 100000000; }
+                                case "B"    { $val = $val * 1000000000; }
+                                else        { die "$0: $letter isn't valid syntax\n"; }                                
+                            }
+                            if($val gt 1000000000000){
+                                die "$0: value $val violates max value to be tested, value must be at or under 1 Trillion\n";
+                            }
+                            if($size gt $val){
+                                print "$dir: total maximum of $tempVal voilated\n";
+                            }
+                            }
+                    } else {
+                        die "$0: Incorrect syntax on check $row!\n";
+                    }
+                } elsif ($firstChar eq "n"){
+                    if ($secChar eq ">"){
+                    if (looks_like_number($val)){
+                            if ($size lt $val){
+                                print "$dir: number minimum of $val voilated\n";
+                            }
+                        } else {
+                            my $tempVal = $val;
+                            my $letter = chop $val;
+                            $letter = uc $letter;
+                            switch ($letter) {
+                                case "D"    { $val = $val * 12; }
+                                case "S"    { $val = $val * 20; }
+                                case "H"    { $val = $val * 100; }
+                                case "M"    { $val = $val * 100000000; }
+                                case "B"    { $val = $val * 1000000000; }
+                                else        { die "$0: $letter isn't valid syntax\n"; }                                
+                            }
+                            if($val gt 1000000000000){
+                                die "$0: value $val violates max value to be tested, value must be at or under 1 Trillion\n";
+                            }
+                            if($size lt $val){
+                                print "$dir: number minimum of $tempVal voilated\n";
+                            }
+                            }
+                    } elsif ($secChar eq "<"){
+                        if (looks_like_number($val)){
+                            if ($size gt $val){
+                                print "$dir: number maximum of $val voilated\n";
+                            }
+                        } else {
+                            my $tempVal = $val;
+                            my $letter = chop $val;
+                            $letter = uc $letter;
+                            switch ($letter) {
+                                case "D"    { $val = $val * 12; }
+                                case "S"    { $val = $val * 20; }
+                                case "H"    { $val = $val * 100; }
+                                case "M"    { $val = $val * 100000000; }
+                                case "B"    { $val = $val * 1000000000; }
+                                else        { die "$0: $letter isn't valid syntax\n"; }                                
+                            }
+                            if($val gt 1000000000000){
+                                die "$0: value $val violates max value to be tested, value must be at or under 1 Trillion\n";
+                            }
+                            if($size gt $val){
+                                print "$dir: number maximum of $tempVal voilated\n";
+                            }
+                            }                    
+                        }
+                        else {
+                            die "$0: Incorrect syntax on check $row!\n";
+                        }
+                   
+                    }
+                else {
+                    die "$0: $row is not a vaild check!\n";
+                }
+        
+    }
+        
+        }
+    }
+}
+

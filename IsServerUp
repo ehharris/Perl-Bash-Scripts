@@ -1,0 +1,169 @@
+#! /usr/bin/perl
+use 5.16.1;
+use strict;
+use warnings;
+use Net::Ping;
+
+#Name: Eli Harris
+#Email: ehharris@rams.colostate.edu
+#Date: 10/21
+#Class: CT320
+#Assign: HW4/up
+
+my ($option, $option2, $option3, $number, $why) = @ARGV;
+
+my $p = Net::Ping->new();
+my $v = 1;
+my $count = 3;
+
+if(not defined $option){
+    die "Error in program $0: No input args, usage = (options) 'address to ping' \n";
+}
+
+if(not defined $option2){
+    my $success = 0;
+    foreach my $c (1 .. $count) {
+        my ($ret, $duration, $ip) = $p->ping($option);
+        if ($ret) {
+            $success++;
+        }
+    }
+    print "$option: $success/$count\n"
+}elsif(not defined $option3){
+    if ($option eq "-s"){
+        my $success = 0;
+        foreach my $c (1 .. $count) {
+            my ($ret, $duration, $ip) = $p->ping($option2);
+            if ($ret) {
+                $success++;
+            }
+        }
+        if($success lt $count){
+            print "$option2: $success/$count\n"
+        }
+    }
+    if ($option eq "-p"){
+         die "Error in program $0: Need count for ping if using -p, usage = (options) 'address to ping' \n";
+    }
+    my ($pe, $numba) = (split /p/, $option)[0, 1];
+    if ($pe ne "-") { die "Error in program $0: $pe not an option, usage = (options) 'address to ping' \n";}
+    if ( $numba =~ /^[0-9]+$/ ) {
+         my $success = 0;
+        foreach my $c (1 .. $numba) {
+            my ($ret, $duration, $ip) = $p->ping($option2);
+            if ($ret) {
+                $success++;
+            }
+        }
+        print "$option2: $success/$numba\n"
+    } else {
+        die "Error in program $0: $numba isn't a number, usage = (options) 'address to ping' \n";
+    }
+}elsif(not defined $number){
+     if ($option eq "-s"){
+        if ($option2 eq "-p"){
+            die "Error in program $0: Need count for ping if using -p, usage = (options) 'address to ping' \n";
+        }
+        my ($pe, $numba) = (split /p/, $option2)[0, 1];
+        if ($pe ne "-") { die "Error in program $0: $pe not an option, usage = (options) 'address to ping' \n";}
+        if ( $numba =~ /^[0-9]+$/ ) {
+            my $success = 0;
+            foreach my $c (1 .. $numba) {
+                my ($ret, $duration, $ip) = $p->ping($option3);
+                if ($ret) {
+                    $success++;
+                }
+            }
+            if($success lt $numba){
+                print "$option3: $success/$numba\n"
+            }
+            } else {
+                die "Error in program $0: $numba isn't a number, usage = (options) 'address to ping' \n";
+            }
+    
+    } elsif ($option eq "-p"){
+         if ( $option2 =~ /^[0-9]+$/ ) {
+            my $success = 0;
+            foreach my $d (1 .. $option2) {
+                my ($ret, $duration, $ip) = $p->ping($option3);
+                if ($ret) {
+                    $success++;
+                }
+            }
+            print "$option3: $success/$option2\n"
+        } else {
+            die "Error in program $0: $option2 isn't a number or '-s', usage = (options) 'address to ping' \n";
+        }
+    } else {
+     my ($pe, $numba) = (split /p/, $option)[0, 1];
+        if ($pe ne "-") { die "Error in program $0: $pe not an option, usage = (options) 'address to ping' \n";}
+        if($option2 eq "-s"){
+            if ( $numba =~ /^[0-9]+$/ ) {
+                my $success = 0;
+                foreach my $c (1 .. $numba) {
+                    my ($ret, $duration, $ip) = $p->ping($option3);
+                    if ($ret) {
+                        $success++;
+                    }
+                }
+                if($success lt $numba){
+                    print "$option3: $success/$numba\n"
+                }
+            } else {
+                die "Error in program $0: $numba isn't a number, usage = (options) 'address to ping' \n";
+            }
+        }
+    
+    }
+}elsif (defined $why){
+    die "Error in program $0: Wrong number of args, usage = (options) 'address to ping' \n";
+} else {
+    if ($option eq "-p"){
+        if ($option3 eq "-s"){
+            if ( $option2 =~ /^[0-9]+$/ ) {
+                my $success = 0;
+                foreach my $c (1 .. $option2) {
+                    my ($ret, $duration, $ip) = $p->ping($number);
+                    if ($ret) {
+                        $success++;
+                    }
+                }
+                if($success lt $option2){
+                    print "$number: $success/$option2\n"
+                }
+            } else {
+                die "Error in program $0: $option2 isn't a number, usage = (options) 'address to ping' \n";
+            }
+    } else {
+            die "Error in program $0: Wrong use of args, usage = (options) 'address to ping' \n";
+    } 
+    
+    } elsif ($option eq "-s"){
+         if ($option2 eq "-p"){
+            if ( $option3 =~ /^[0-9]+$/ ) {
+                my $success = 0;
+                foreach my $c (1 .. $option3) {
+                    my ($ret, $duration, $ip) = $p->ping($number);
+                    if ($ret) {
+                        $success++;
+                    }
+                }
+                if($success lt $option3){
+                    print "$number: $success/$option3\n"
+                }
+            } else {
+                die "Error in program $0: $option3 isn't a number, usage = (options) 'address to ping' \n";
+            }
+        } else {
+            die "Error in program $0: Wrong use of args, usage = (options) 'address to ping' \n";
+        }
+    } else {
+        die "Error in program $0: Wrong use of args, usage = (options) 'address to ping' \n";
+    }
+    
+}
+
+
+    
+
+

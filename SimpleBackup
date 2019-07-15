@@ -1,0 +1,169 @@
+#! /usr/bin/perl
+use 5.16.1;
+use strict;
+use warnings;
+use File::Basename;
+#Name: Eli Harris
+#Email: ehharris@rams.colostate.edu
+#Date: 11/1
+#Class: CT320
+#Assign: HW5/census
+
+my $firstRun = 0; 
+my $dir = ".census-data";
+my $file = "old-data";
+my $homeDir = "~/";
+my @data;
+
+my $dont = @ARGV;
+if($dont ne 0){
+    die "Arguments entered, none expected! Usage: ./census \n";
+}
+
+sub search2{
+    my $sumDir = "";
+    foreach my $item (@_) {
+        $sumDir .= $item;
+    }
+    $sumDir .= "*";
+    my @files = glob($sumDir);
+    foreach my $files(@files){
+        my $baseCase = basename($files);
+        #print "$yo\n";
+        if($baseCase ne "."){
+            if ($baseCase ne ".."){
+                #print ("$baseCase\n");
+                if(-d $files){
+                    #print ("$files\n");
+                    search($files, "/");
+                    search2($files, "/.");
+                } 
+            }
+        }
+    }
+}
+
+sub search{
+    my $oriDir = "";
+    foreach my $item (@_) {
+        $oriDir .= $item;
+    }
+    #print ("$oriDir\n");
+    my $sumDir = $oriDir . "*";
+    my @files = glob($sumDir);
+    foreach my $files(@files){
+        #print("$files\n");
+        if(-d $files){
+            search($files, "/");
+            search2($files, "/.");
+        }
+        elsif (-f $files){
+            #Gets right path
+            my @path = split('/', $files);
+            my $src = "";
+            foreach my $i (4 .. $#path){
+                $src .= $path[$i-1] . "/"; 
+            }
+            $src .= $path[$#path];
+            #print ("$src\n");
+            push @data, $src;
+        }
+        #print basename($files), "\n";
+    }
+}
+
+if(! -d $dir){
+    $firstRun = 1;
+    unless(mkdir $dir){
+        die "Can't create $dir\n";
+    }
+    #chdir $dir;
+    unless(open FILE, '>>'."$dir/$file") {
+    # Die with error message 
+    # if we can't open it.
+        die "\nUnable to create $file\n";
+    }
+    search($homeDir);
+    $homeDir .= ".";
+    search2($homeDir);
+    foreach my $i (0 .. $#data){
+        print FILE ("$data[$i]\n");
+    }
+    close FILE;
+}
+
+if($firstRun eq 0){
+    search($homeDir);
+    $homeDir .= ".";
+    search2($homeDir);
+    open(my $INPUT, '<'."$dir/$file") 
+        or die "\nUnable to open $file\n";
+    my @data2;
+    while(my $source = <$INPUT>){
+        my $tmp = chomp $source;
+        push @data2, $source;
+    }
+    #Checks if something got deleted
+    my @deleted;
+    my $isDel = 0;
+    foreach my $darta(@data2){
+        foreach my $barta(@data){
+            if ($darta eq $barta){
+                $isDel = 1;
+            }
+        }
+        if ($isDel == 0){
+            push @deleted, $darta;
+        }
+        $isDel = 0;
+    }
+    #Prints Deleted files
+    my $del = @deleted;
+    if($del ne 0){
+        print ("Deleted:\n");
+        foreach my $deb(@deleted) {
+            print ("    $deb\n");
+        }
+    }
+    #Checks if added
+    my @added;
+    my $isAdd = 0;
+    foreach my $barta(@data){
+        foreach my $darta(@data2){
+            if ($barta eq $darta){
+                $isAdd = 1;
+            }
+        }
+        if ($isAdd == 0){
+            
+            push @added, $barta;
+        }
+        $isAdd = 0;
+    }
+     #Prints Added files
+    my $add = @added;
+    if($add ne 0){
+        print ("New:\n");
+        foreach my $src(@added) {
+            my $base = "~/";
+            $base .= $src;
+            my $output = `ls -l $base`;
+            my @out2 = split('/', $output);
+            my $final = $out2[0] . $src;
+            
+            print ("    $final\n");
+        }
+    }
+    close $INPUT;
+    unlink("$dir/$file");
+    unless(open FILE, '>>'."$dir/$file") {
+    # Die with error message 
+    # if we can't open it.
+        die "\nUnable to create $file\n";
+    }
+    foreach my $i (0 .. $#data){
+        print FILE ("$data[$i]\n");
+    }
+    close FILE;
+
+}
